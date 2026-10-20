@@ -19,7 +19,7 @@ public class MovimientoJugador : MonoBehaviour
     private Vector2 entradaX;
     private bool saltoPendiente;
     private bool estaTocandoSuelo;
-    private float longitudRaycast = 0.1f;
+    private float longitudRaycast = 1.6f;
     
 
     private void Awake()
@@ -39,6 +39,12 @@ public class MovimientoJugador : MonoBehaviour
         entradaX = accionMover.action.ReadValue<Vector2>();
 
         RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, longitudRaycast, capaSuelo);
+
+        estaTocandoSuelo = hit.collider != null;
+
+        Color colorRayo = estaTocandoSuelo ? Color.green : Color.red;
+
+        Debug.DrawRay(transform.position, Vector2.down * longitudRaycast, colorRayo);
 
         if (accionSaltar.action.WasPressedThisFrame() && estaTocandoSuelo)
         {
