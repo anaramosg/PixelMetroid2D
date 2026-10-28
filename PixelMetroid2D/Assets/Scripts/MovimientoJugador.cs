@@ -1,3 +1,5 @@
+using System;
+using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -15,16 +17,22 @@ public class MovimientoJugador : MonoBehaviour
     public float fuerzaImpulso = 5f;
     [SerializeField] private LayerMask capaSuelo;
 
-    private Rigidbody2D rb;
+    private Rigidbody2D fisica;
+    private SpriteRenderer renderizador;
+    private Animator animador;
     private Vector2 entradaX;
     private bool saltoPendiente;
     private bool estaTocandoSuelo;
     private float longitudRaycast = 1.6f;
+    private float umbralCarrera = 0.1f;
     
 
     private void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
+        fisica = GetComponent<Rigidbody2D>();
+
+        renderizador = GetComponent<SpriteRenderer>();
+        animador = GetComponent<Animator>();
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -51,6 +59,24 @@ public class MovimientoJugador : MonoBehaviour
             saltoPendiente = true;
         }
 
+        AnimarJugador();
+
+    }
+
+    private void AnimarJugador()
+    {
+        if (animador == null)
+            return;
+        if (!estaTocandoSuelo)
+        {
+            animador.Play("JugadorSalto");
+        }
+        else if (Mathf.Abs(fisica.linearVelocityX) > umbralCarrera)
+        {
+            animador.Play("JugadorCorriendo");
+        }
+        else
+            animador.Play("JugadorParado");
     }
 
     private void OnEnable()
@@ -90,13 +116,31 @@ public class MovimientoJugador : MonoBehaviour
 
     private void FixedUpdate()
     {
-        rb.linearVelocity = new Vector2(entradaX.x * velocity, rb.linearVelocity.y);
+        fisica.linearVelocity = new Vector2(entradaX.x * velocity, fisica.linearVelocity.y);
         if (saltoPendiente)
         {
-            rb.AddForce(Vector2.up * fuerzaImpulso, ForceMode2D.Impulse);
+            fisica.AddForce(Vector2.up * fuerzaImpulso, ForceMode2D.Impulse);
         }
 
         saltoPendiente = false;
 
+        OrientarSprite();
+
+    }
+
+    private void OrientarSprite()
+    {
+        if (renderizador == null)
+            return;
+
+        if (fisica.linearVelocity.x > 0)
+        {
+            renderizador.flipX = false;
+        }
+        else if (fisica.linearVelocity.x < 0)
+        {
+            renderizador.flipX = true;
+
+        }
     }
 }

@@ -14,11 +14,16 @@ public class ControlEnemigo : MonoBehaviour
 
     private Rigidbody2D fisica;
 
+    [SerializeField]
+    private SpriteRenderer renderizador;
+    private Vector2 posicionObjetivo;
+
 
 
     private void Awake()
     {
         fisica = GetComponent<Rigidbody2D>();
+
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -34,7 +39,7 @@ public class ControlEnemigo : MonoBehaviour
 
     private void FixedUpdate()
     {
-        Vector2 posicionObjetivo;
+        //Vector2 posicionObjetivo;
 
         if (velocidad <= 0)
             return;
@@ -68,5 +73,25 @@ public class ControlEnemigo : MonoBehaviour
         }
 
         fisica.MovePosition(Vector2.MoveTowards(fisica.position, posicionObjetivo, velocidad * Time.deltaTime));
+
+        OrientarSprite();
+    }
+
+    private void OrientarSprite()
+    {
+        float direccion = posicionObjetivo.x - fisica.position.x;
+
+        if (renderizador == null)
+            return;
+
+        if (direccion > 0.1f)
+        {
+            renderizador.flipX = true;
+        }
+        else if (direccion < -0.1f)
+        {
+            renderizador.flipX = false;
+
+        }
     }
 }
