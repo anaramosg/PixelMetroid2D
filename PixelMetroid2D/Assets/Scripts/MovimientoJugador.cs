@@ -9,6 +9,9 @@ public class MovimientoJugador : MonoBehaviour
     [Header("Movimiento")]
     public float velocity;
 
+    [Header("Reaparción")]
+    [SerializeField] private Transform spawnPoint;
+
     [SerializeField] private InputActionReference accionMover;
 
     [Header("Salto")]
@@ -142,5 +145,17 @@ public class MovimientoJugador : MonoBehaviour
             renderizador.flipX = true;
 
         }
+    }
+
+    public void ReaparecerJugador()
+    {
+        if(spawnPoint == null)
+        {
+            Debug.LogError("Asigna un Spawn Point al objeto jugador", this);
+            enabled = false;
+            return;
+        }
+        fisica.position = (Vector2)spawnPoint.position;
+        fisica.linearVelocity = Vector2.zero;
     }
 }
