@@ -1,4 +1,5 @@
 using System;
+using Unity.VisualScripting;
 using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -28,7 +29,20 @@ public class MovimientoJugador : MonoBehaviour
     private bool estaTocandoSuelo;
     private float longitudRaycast = 1.6f;
     private float umbralCarrera = 0.1f;
-    
+
+    [Header("Puntuación")]
+    [SerializeField] private int puntuacion;
+    [Header("Salud")]
+    [SerializeField] private int vidas = 3;
+    public int Vidas => vidas;
+    private Color colorOriginal;
+    private bool vulnerable = true;
+    [SerializeField, Min(0.01f)] private float segundosInvulnerable = 1f;
+    [Header("Tiempo")]
+    private float tiempoInicio;
+    private float tiempoReal;
+    [SerializeField] private int tiempoEmpleado;
+    [SerializeField,Min(1)] private int tiempoLimiteNivel = 100; 
 
     private void Awake()
     {
@@ -41,6 +55,12 @@ public class MovimientoJugador : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        if (renderizador != null)
+            colorOriginal = renderizador.color;
+        else
+            Debug.LogError("El jugador no tiene asignador el objeto Sprite Render");
+
+        tiempoInicio = Time.time;
         
     }
 
@@ -49,6 +69,29 @@ public class MovimientoJugador : MonoBehaviour
     {
         entradaX = accionMover.action.ReadValue<Vector2>();
 
+        ComprobarFinJuegoTiempo();
+
+        SaltoJugador();
+
+        AnimarJugador();
+
+
+
+    }
+
+    private void ComprobarFinJuegoTiempo()
+    {
+        tiempoReal = Time.time - tiempoInicio;
+        tiempoEmpleado = Mathf.FloorToInt(tiempoReal);
+        if (tiempoEmpleado >= tiempoLimiteNivel)
+        {
+            FinJuego();
+            return;
+        }
+    }
+
+    private void SaltoJugador()
+    {
         RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, longitudRaycast, capaSuelo);
 
         estaTocandoSuelo = hit.collider != null;
@@ -61,8 +104,6 @@ public class MovimientoJugador : MonoBehaviour
         {
             saltoPendiente = true;
         }
-
-        AnimarJugador();
 
     }
 
@@ -119,6 +160,11 @@ public class MovimientoJugador : MonoBehaviour
 
     private void FixedUpdate()
     {
+        MoverJugador();
+    }
+
+    private void MoverJugador()
+    {
         fisica.linearVelocity = new Vector2(entradaX.x * velocity, fisica.linearVelocity.y);
         if (saltoPendiente)
         {
@@ -128,7 +174,6 @@ public class MovimientoJugador : MonoBehaviour
         saltoPendiente = false;
 
         OrientarSprite();
-
     }
 
     private void OrientarSprite()
@@ -157,5 +202,43 @@ public class MovimientoJugador : MonoBehaviour
         }
         fisica.position = (Vector2)spawnPoint.position;
         fisica.linearVelocity = Vector2.zero;
+    }
+
+    public void IncrementarPuntos(int cantidad)
+    {
+        if (cantidad <= 0) return;
+
+        puntuacion += cantidad;
+    }
+    public void QuitarVida()
+    {
+        if (!vulnerable) return;
+        vulnerable = false;
+        vidas--;
+
+        if (renderizador != null)
+        {
+            renderizador.color = Color.blue;
+        }
+
+        if(vidas <= 0)
+        {
+            FinJuego();
+            return;
+        }
+        Invoke(nameof(HacerVulnerable), segundosInvulnerable);
+    }
+
+    private void HacerVulnerable()
+    {
+        vulnerable = true;
+        if (renderizador != null)
+            renderizador.color = colorOriginal;
+    }
+
+    private void FinJuego()
+    {
+        Debug.Log("Juego finalizado.!");
+        gameObject.SetActive(false);
     }
 }
