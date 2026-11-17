@@ -39,10 +39,15 @@ public class MovimientoJugador : MonoBehaviour
     private bool vulnerable = true;
     [SerializeField, Min(0.01f)] private float segundosInvulnerable = 1f;
     [Header("Tiempo")]
+    [SerializeField] private int tiempoEmpleado;
+    [SerializeField, Min(1)] private int tiempoLimiteNivel = 100;
     private float tiempoInicio;
     private float tiempoReal;
-    [SerializeField] private int tiempoEmpleado;
-    [SerializeField,Min(1)] private int tiempoLimiteNivel = 100; 
+    
+
+    [Header("Canvas")]
+    [SerializeField] private Canvas canvasInterfaz;
+    private ControlHUD hud;
 
     private void Awake()
     {
@@ -61,6 +66,8 @@ public class MovimientoJugador : MonoBehaviour
             Debug.LogError("El jugador no tiene asignador el objeto Sprite Render");
 
         tiempoInicio = Time.time;
+
+        inicializarHud();
         
     }
 
@@ -75,6 +82,8 @@ public class MovimientoJugador : MonoBehaviour
 
         AnimarJugador();
 
+        hud.SetPowerUP(GameObject.FindGameObjectsWithTag("PowerUp").Length);
+
 
 
     }
@@ -83,6 +92,9 @@ public class MovimientoJugador : MonoBehaviour
     {
         tiempoReal = Time.time - tiempoInicio;
         tiempoEmpleado = Mathf.FloorToInt(tiempoReal);
+        int segundosRestantes =Mathf.Max(0, Mathf.CeilToInt(tiempoLimiteNivel - tiempoReal));
+        hud.SetTiempo(segundosRestantes);
+
         if (tiempoEmpleado >= tiempoLimiteNivel)
         {
             FinJuego();
@@ -216,6 +228,8 @@ public class MovimientoJugador : MonoBehaviour
         vulnerable = false;
         vidas--;
 
+        hud.SetVidas(vidas);
+
         if (renderizador != null)
         {
             renderizador.color = Color.blue;
@@ -240,5 +254,25 @@ public class MovimientoJugador : MonoBehaviour
     {
         Debug.Log("Juego finalizado.!");
         gameObject.SetActive(false);
+
+    }
+
+    private void inicializarHud()
+    {
+        if (canvasInterfaz != null)
+        {
+            hud = canvasInterfaz.GetComponent<ControlHUD>();
+        }
+        else
+            Debug.LogError("Asigna el objeto Canvas con el componente ControlHud al atributo Canvas de Jugador.");
+
+        if (hud != null)
+        {
+            hud.SetVidas(vidas);
+            hud.SetTiempo(tiempoLimiteNivel);
+            hud.SetPowerUP(GameObject.FindGameObjectsWithTag("PowerUp").Length);
+        }
+        else
+            Debug.LogError("Asigna el objeto Canvas con el componente ControlHud al atributo Canvas de Jugador.");
     }
 }
