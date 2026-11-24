@@ -143,3 +143,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ControlPowerUp
   cantidad: 2
+  recogerSonido: {fileID: 8300000, guid: 12d89d0c9fc585940bb2bddd07fab5b1, type: 3}

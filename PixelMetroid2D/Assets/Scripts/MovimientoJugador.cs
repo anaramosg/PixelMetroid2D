@@ -3,6 +3,8 @@ using Unity.VisualScripting;
 using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
+
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class MovimientoJugador : MonoBehaviour
@@ -49,6 +51,13 @@ public class MovimientoJugador : MonoBehaviour
     [SerializeField] private Canvas canvasInterfaz;
     private ControlHUD hud;
 
+    private ControlDatosJuego controlDatosJuego;
+
+    [Header("Audio")]
+    [SerializeField] private AudioClip saltoSonido;
+    [SerializeField] private AudioClip vidaSonido;
+    private AudioSource efectosSonido;
+
     private void Awake()
     {
         fisica = GetComponent<Rigidbody2D>();
@@ -66,6 +75,14 @@ public class MovimientoJugador : MonoBehaviour
             Debug.LogError("El jugador no tiene asignador el objeto Sprite Render");
 
         tiempoInicio = Time.time;
+
+        controlDatosJuego = ControlDatosJuego.Instancia;
+        if (controlDatosJuego == null)
+        {
+            Debug.LogError("añade Datos Juego al nivel");
+        }
+        else
+            controlDatosJuego.ReiniciarPartida();
 
         inicializarHud();
         
@@ -181,6 +198,8 @@ public class MovimientoJugador : MonoBehaviour
         if (saltoPendiente)
         {
             fisica.AddForce(Vector2.up * fuerzaImpulso, ForceMode2D.Impulse);
+            if (saltoSonido != null)
+                efectosSonido.PlayOneShot(saltoSonido);
         }
 
         saltoPendiente = false;
@@ -228,6 +247,9 @@ public class MovimientoJugador : MonoBehaviour
         vulnerable = false;
         vidas--;
 
+        if (vidaSonido == null)
+            efectosSonido.PlayOneShot(vidaSonido);
+
         hud.SetVidas(vidas);
 
         if (renderizador != null)
@@ -252,9 +274,26 @@ public class MovimientoJugador : MonoBehaviour
 
     private void FinJuego()
     {
-        Debug.Log("Juego finalizado.!");
-        gameObject.SetActive(false);
+        if (controlDatosJuego == null)
+        {
+            Debug.LogError("Falta el objeto Control Datos Juego para poder guardar el resultado de la partida", this);
+            return;
+        }
+        controlDatosJuego.GuardarResultado(false, 0);
+        SceneManager.LoadScene("FinNivel");
+//        Debug.Log("Juego finalizado.!");
+//        gameObject.SetActive(false);
 
+    }
+
+    public void Victoria()
+    {
+        puntuacion = vidas * 100 + Mathf.Max(0, tiempoLimiteNivel - tiempoEmpleado);
+
+        saltoPendiente = false;
+        fisica.linearVelocity = Vector2.zero;
+
+        controlDatosJuego.GuardarResultado(true, puntuacion);
     }
 
     private void inicializarHud()
